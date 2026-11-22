@@ -63,7 +63,7 @@ InspectionPlanForm.Meta → labels, help_texts, widgets; smartspace_web/forms.py
 
 Продемонстрируйте обработку GET- и POST-запросов при создании бронирования
 
-reports_web/plan_views.py → plan_create и _edit_plan; templates/reports_web/plan_form.html.
+reports_web/plan_views.py → plan_create и _edit_plan; reports_web/templates/reports_web/plan_form.html.
 
 - Откройте /inspections/create/ методом GET: форма пустая, is_bound=False.
 - Выберите помещение №1 и свободную дату D+10, заполните задачу и сохраните. Затем отправьте другую форму с прошедшей датой и покажите сохранённый текст задачи.
@@ -96,7 +96,7 @@ InspectionPlanForm.clean; reports_web/plans.py → PlanQuerySet.active; Meta.con
 
 Продемонстрируйте настройку отображения ошибок и подсказок формы
 
-templates/includes/form_fields.html; reports_web/templates/reports_web/plan_form.html.
+templates/includes/form_fields.html; reports_web/reports_web/templates/reports_web/plan_form.html.
 
 - Покажите form.errors, field.errors, form.non_field_errors и field.help_text в общем фрагменте.
 - Отправьте форму с датой в прошлом, затем с занятой парой помещение-дата. Сопоставьте расположение сообщений и убедитесь, что задача проверки осталась заполненной.
@@ -118,7 +118,7 @@ reports_web/plan_views.py → _edit_plan: form.save(commit=False), obj.created_b
 
 Продемонстрируйте редактирование существующего бронирования
 
-reports_web/plan_views.py → plan_edit, get_object_or_404 и _edit_plan(instance=plan).
+reports_web/plan_views.py → plan_edit, get_object_or_404; InspectionPlanForm(..., instance=plan) в _edit_plan.
 
 - В списке нажмите «Изменить» у плана «Защита ПР11». Запомните номер из заголовка и адреса.
 - Поменяйте задачу и перенесите проверку на свободный день. Сохраните, затем найдите тот же ID в админке. Проверьте, что автор не изменился.
