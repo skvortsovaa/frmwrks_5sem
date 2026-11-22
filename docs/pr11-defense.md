@@ -96,7 +96,7 @@ InspectionPlanForm.clean; reports_web/plans.py → PlanQuerySet.active; Meta.con
 
 Продемонстрируйте настройку отображения ошибок и подсказок формы
 
-templates/includes/form_fields.html; reports_web/reports_web/templates/reports_web/plan_form.html.
+templates/includes/form_fields.html; reports_web/templates/reports_web/plan_form.html.
 
 - Покажите form.errors, field.errors, form.non_field_errors и field.help_text в общем фрагменте.
 - Отправьте форму с датой в прошлом, затем с занятой парой помещение-дата. Сопоставьте расположение сообщений и убедитесь, что задача проверки осталась заполненной.
