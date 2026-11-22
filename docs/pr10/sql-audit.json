@@ -25,7 +25,7 @@
       "sql": [
         "SELECT COUNT(*) AS \"__count\" FROM \"reports_web_report\"",
         "SELECT \"rooms_web_room\".\"id\" AS \"id\", \"rooms_web_room\".\"name\" AS \"name\" FROM \"rooms_web_room\" ORDER BY 2 ASC, 1 ASC",
-        "SELECT \"reports_web_report\".\"id\", \"reports_web_report\".\"room_id\", \"reports_web_report\".\"room_name\", \"reports_web_report\".\"checked_at\", \"reports_web_report\".\"sensor_active\", \"reports_web_report\".\"battery\", \"reports_web_report\".\"temperature_value\", \"reports_web_report\".\"temperature_minimum\", \"reports_web_report\".\"temperature_maximum\", \"reports_web_report\".\"temperature_normal\", \"reports_web_report\".\"humidity_value\", \"reports_web_report\".\"humidity_minimum\", \"reports_web_report\".\"humidity_maximum\", \"reports_web_report\".\"humidity_normal\", \"reports_web_report\".\"leak_detected\", \"reports_web_report\".\"status\", \"rooms_web_room\".\"id\", \"rooms_web_room\".\"name\", \"rooms_web_room\".\"floor\", \"rooms_web_room\".\"area\", \"rooms_web_room\".\"slug\", \"rooms_web_room\".\"is_large\" FROM \"reports_web_report\" INNER JOIN \"rooms_web_room\" ON (\"reports_web_report\".\"room_id\" = \"rooms_web_room\".\"id\") ORDER BY \"reports_web_report\".\"checked_at\" DESC, \"reports_web_report\".\"id\" ASC LIMIT 1"
+        "SELECT \"reports_web_report\".\"id\", \"reports_web_report\".\"room_id\", \"reports_web_report\".\"room_name\", \"reports_web_report\".\"checked_at\", \"reports_web_report\".\"sensor_active\", \"reports_web_report\".\"battery\", \"reports_web_report\".\"status\", \"rooms_web_room\".\"id\", \"rooms_web_room\".\"name\", \"rooms_web_room\".\"floor\", \"rooms_web_room\".\"area\", \"rooms_web_room\".\"slug\", \"rooms_web_room\".\"is_large\" FROM \"reports_web_report\" INNER JOIN \"rooms_web_room\" ON (\"reports_web_report\".\"room_id\" = \"rooms_web_room\".\"id\") ORDER BY \"reports_web_report\".\"checked_at\" DESC, \"reports_web_report\".\"id\" ASC LIMIT 10"
       ]
     },
     "/reports/?sort=room&page_size=1&page=2": {
@@ -34,7 +34,7 @@
       "sql": [
         "SELECT COUNT(*) AS \"__count\" FROM \"reports_web_report\"",
         "SELECT \"rooms_web_room\".\"id\" AS \"id\", \"rooms_web_room\".\"name\" AS \"name\" FROM \"rooms_web_room\" ORDER BY 2 ASC, 1 ASC",
-        "SELECT \"reports_web_report\".\"id\", \"reports_web_report\".\"room_id\", \"reports_web_report\".\"room_name\", \"reports_web_report\".\"checked_at\", \"reports_web_report\".\"sensor_active\", \"reports_web_report\".\"battery\", \"reports_web_report\".\"temperature_value\", \"reports_web_report\".\"temperature_minimum\", \"reports_web_report\".\"temperature_maximum\", \"reports_web_report\".\"temperature_normal\", \"reports_web_report\".\"humidity_value\", \"reports_web_report\".\"humidity_minimum\", \"reports_web_report\".\"humidity_maximum\", \"reports_web_report\".\"humidity_normal\", \"reports_web_report\".\"leak_detected\", \"reports_web_report\".\"status\", \"rooms_web_room\".\"id\", \"rooms_web_room\".\"name\", \"rooms_web_room\".\"floor\", \"rooms_web_room\".\"area\", \"rooms_web_room\".\"slug\", \"rooms_web_room\".\"is_large\" FROM \"reports_web_report\" INNER JOIN \"rooms_web_room\" ON (\"reports_web_report\".\"room_id\" = \"rooms_web_room\".\"id\") ORDER BY \"rooms_web_room\".\"name\" ASC, \"reports_web_report\".\"checked_at\" DESC, \"reports_web_report\".\"id\" ASC LIMIT 1"
+        "SELECT \"reports_web_report\".\"id\", \"reports_web_report\".\"room_id\", \"reports_web_report\".\"room_name\", \"reports_web_report\".\"checked_at\", \"reports_web_report\".\"sensor_active\", \"reports_web_report\".\"battery\", \"reports_web_report\".\"status\", \"rooms_web_room\".\"id\", \"rooms_web_room\".\"name\", \"rooms_web_room\".\"floor\", \"rooms_web_room\".\"area\", \"rooms_web_room\".\"slug\", \"rooms_web_room\".\"is_large\" FROM \"reports_web_report\" INNER JOIN \"rooms_web_room\" ON (\"reports_web_report\".\"room_id\" = \"rooms_web_room\".\"id\") ORDER BY \"rooms_web_room\".\"name\" ASC, \"reports_web_report\".\"checked_at\" DESC, \"reports_web_report\".\"id\" ASC LIMIT 1 OFFSET 1"
       ]
     },
     "/reports/?exclude_no_data=1": {
@@ -43,7 +43,7 @@
       "sql": [
         "SELECT COUNT(*) AS \"__count\" FROM \"reports_web_report\" WHERE NOT (\"reports_web_report\".\"status\" = 'НЕТ ДАННЫХ')",
         "SELECT \"rooms_web_room\".\"id\" AS \"id\", \"rooms_web_room\".\"name\" AS \"name\" FROM \"rooms_web_room\" ORDER BY 2 ASC, 1 ASC",
-        "SELECT \"reports_web_report\".\"id\", \"reports_web_report\".\"room_id\", \"reports_web_report\".\"room_name\", \"reports_web_report\".\"checked_at\", \"reports_web_report\".\"sensor_active\", \"reports_web_report\".\"battery\", \"reports_web_report\".\"temperature_value\", \"reports_web_report\".\"temperature_minimum\", \"reports_web_report\".\"temperature_maximum\", \"reports_web_report\".\"temperature_normal\", \"reports_web_report\".\"humidity_value\", \"reports_web_report\".\"humidity_minimum\", \"reports_web_report\".\"humidity_maximum\", \"reports_web_report\".\"humidity_normal\", \"reports_web_report\".\"leak_detected\", \"reports_web_report\".\"status\", \"rooms_web_room\".\"id\", \"rooms_web_room\".\"name\", \"rooms_web_room\".\"floor\", \"rooms_web_room\".\"area\", \"rooms_web_room\".\"slug\", \"rooms_web_room\".\"is_large\" FROM \"reports_web_report\" INNER JOIN \"rooms_web_room\" ON (\"reports_web_report\".\"room_id\" = \"rooms_web_room\".\"id\") WHERE NOT (\"reports_web_report\".\"status\" = 'НЕТ ДАННЫХ') ORDER BY \"reports_web_report\".\"checked_at\" DESC, \"reports_web_report\".\"id\" ASC LIMIT 1"
+        "SELECT \"reports_web_report\".\"id\", \"reports_web_report\".\"room_id\", \"reports_web_report\".\"room_name\", \"reports_web_report\".\"checked_at\", \"reports_web_report\".\"sensor_active\", \"reports_web_report\".\"battery\", \"reports_web_report\".\"status\", \"rooms_web_room\".\"id\", \"rooms_web_room\".\"name\", \"rooms_web_room\".\"floor\", \"rooms_web_room\".\"area\", \"rooms_web_room\".\"slug\", \"rooms_web_room\".\"is_large\" FROM \"reports_web_report\" INNER JOIN \"rooms_web_room\" ON (\"reports_web_report\".\"room_id\" = \"rooms_web_room\".\"id\") WHERE NOT (\"reports_web_report\".\"status\" = 'НЕТ ДАННЫХ') ORDER BY \"reports_web_report\".\"checked_at\" DESC, \"reports_web_report\".\"id\" ASC LIMIT 10"
       ]
     },
     "/reports/statistics/": {
@@ -73,33 +73,34 @@
         "SELECT \"rooms_web_room\".\"id\", \"rooms_web_room\".\"name\", \"rooms_web_room\".\"floor\", \"rooms_web_room\".\"area\", \"rooms_web_room\".\"slug\", \"rooms_web_room\".\"is_large\", \"sensors_web_sensor\".\"id\", \"sensors_web_sensor\".\"room_id\", \"sensors_web_sensor\".\"active\", \"sensors_web_sensor\".\"battery\" FROM \"rooms_web_room\" LEFT OUTER JOIN \"sensors_web_sensor\" ON (\"rooms_web_room\".\"id\" = \"sensors_web_sensor\".\"room_id\") WHERE \"rooms_web_room\".\"slug\" = 'servernaia-no-1-1' LIMIT 21"
       ]
     },
-    "/reports/REP-54fa4cd100a2439ca4b7b37524dcc86a/": {
+    "/reports/DEMO-PR10-06-03/": {
       "status": 200,
-      "count": 1,
+      "count": 2,
       "sql": [
-        "SELECT \"reports_web_report\".\"id\", \"reports_web_report\".\"room_id\", \"reports_web_report\".\"room_name\", \"reports_web_report\".\"checked_at\", \"reports_web_report\".\"sensor_active\", \"reports_web_report\".\"battery\", \"reports_web_report\".\"temperature_value\", \"reports_web_report\".\"temperature_minimum\", \"reports_web_report\".\"temperature_maximum\", \"reports_web_report\".\"temperature_normal\", \"reports_web_report\".\"humidity_value\", \"reports_web_report\".\"humidity_minimum\", \"reports_web_report\".\"humidity_maximum\", \"reports_web_report\".\"humidity_normal\", \"reports_web_report\".\"leak_detected\", \"reports_web_report\".\"status\", \"rooms_web_room\".\"id\", \"rooms_web_room\".\"name\", \"rooms_web_room\".\"floor\", \"rooms_web_room\".\"area\", \"rooms_web_room\".\"slug\", \"rooms_web_room\".\"is_large\" FROM \"reports_web_report\" INNER JOIN \"rooms_web_room\" ON (\"reports_web_report\".\"room_id\" = \"rooms_web_room\".\"id\") WHERE \"reports_web_report\".\"id\" = 'REP-54fa4cd100a2439ca4b7b37524dcc86a' LIMIT 21"
+        "SELECT \"reports_web_report\".\"id\", \"reports_web_report\".\"room_id\", \"reports_web_report\".\"room_name\", \"reports_web_report\".\"checked_at\", \"reports_web_report\".\"sensor_active\", \"reports_web_report\".\"battery\", \"reports_web_report\".\"status\", \"rooms_web_room\".\"id\", \"rooms_web_room\".\"name\", \"rooms_web_room\".\"floor\", \"rooms_web_room\".\"area\", \"rooms_web_room\".\"slug\", \"rooms_web_room\".\"is_large\" FROM \"reports_web_report\" INNER JOIN \"rooms_web_room\" ON (\"reports_web_report\".\"room_id\" = \"rooms_web_room\".\"id\") WHERE \"reports_web_report\".\"id\" = 'DEMO-PR10-06-03' LIMIT 21",
+        "SELECT \"reports_web_reading\".\"id\", \"reports_web_reading\".\"sensor_id\", \"reports_web_reading\".\"metric_id\", \"reports_web_reading\".\"report_id\", \"reports_web_reading\".\"measured_at\", \"reports_web_reading\".\"value\", \"reports_web_reading\".\"minimum\", \"reports_web_reading\".\"maximum\", \"reports_web_reading\".\"status\" FROM \"reports_web_reading\" WHERE \"reports_web_reading\".\"report_id\" IN ('DEMO-PR10-06-03') ORDER BY \"reports_web_reading\".\"measured_at\" DESC, \"reports_web_reading\".\"id\" ASC"
       ]
     }
   },
   "comparisons": {
     "report_plain": {
-      "rows": 1,
-      "count": 2
+      "rows": 19,
+      "count": 20
     },
     "report_join": {
-      "rows": 1,
+      "rows": 19,
       "count": 1
     },
     "rooms_plain": {
-      "rooms": 2,
-      "count": 3
+      "rooms": 8,
+      "count": 9
     },
     "rooms_prefetch": {
-      "rooms": 2,
+      "rooms": 8,
       "count": 2
     }
   },
   "projection_sql": "SELECT \"reports_web_reading\".\"id\" AS \"id\", \"reports_web_reading\".\"value\" AS \"value\", \"reports_web_metric\".\"name\" AS \"metric_title\" FROM \"reports_web_reading\" INNER JOIN \"reports_web_metric\" ON (\"reports_web_reading\".\"metric_id\" = \"reports_web_metric\".\"id\") ORDER BY \"reports_web_reading\".\"measured_at\" DESC, 1 ASC",
   "group_sql": "SELECT \"rooms_web_room\".\"id\", \"rooms_web_room\".\"name\", \"rooms_web_room\".\"floor\", \"rooms_web_room\".\"area\", \"rooms_web_room\".\"slug\", \"rooms_web_room\".\"is_large\", COUNT(\"reports_web_report\".\"id\") AS \"history_count\" FROM \"rooms_web_room\" LEFT OUTER JOIN \"reports_web_report\" ON (\"rooms_web_room\".\"id\" = \"reports_web_report\".\"room_id\") GROUP BY \"rooms_web_room\".\"id\", \"rooms_web_room\".\"name\", \"rooms_web_room\".\"floor\", \"rooms_web_room\".\"area\", \"rooms_web_room\".\"slug\", \"rooms_web_room\".\"is_large\"",
-  "plan": "5 0 209 SCAN reports_web_report USING INDEX reports_web_room_id_030ba4_idx\n8 0 45 SEARCH rooms_web_room USING INTEGER PRIMARY KEY (rowid=?)\n43 0 0 USE TEMP B-TREE FOR ORDER BY"
+  "plan": "5 0 209 SCAN reports_web_report USING INDEX reports_web_room_id_030ba4_idx\n8 0 45 SEARCH rooms_web_room USING INTEGER PRIMARY KEY (rowid=?)\n28 0 0 USE TEMP B-TREE FOR ORDER BY"
 }

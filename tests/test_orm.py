@@ -160,6 +160,50 @@ def test_crud_constraints_and_snapshot(orm_client):
         report.delete()
 
 
+def test_report_reads_measurements_without_duplicate_columns(orm_client):
+    report = Report.objects.first()
+    columns = {field.name for field in Report._meta.concrete_fields}
+    assert not any(name.startswith(("temperature_", "humidity_"))
+                   for name in columns)
+    assert "leak_detected" not in columns
+    reading = report.readings.get(metric_id="temperature")
+    reading.value = 31
+    reading.status = Status.WARNING
+    reading.full_clean()
+    reading.save()
+    report.refresh_from_db()
+    assert report.temperature["value"] == 31
+    report.validate_readings()
+    report.status = Status.NORMAL
+    with pytest.raises(ValidationError, match="Статус"):
+        report.validate_readings()
+
+
+def test_report_rejects_incomplete_measurements(orm_client):
+    report = Report.objects.first()
+    report.readings.filter(metric_id="humidity").delete()
+    with pytest.raises(ValidationError, match="три разных"):
+        report.validate_readings()
+
+
+def test_report_detail_prefetches_all_measurements(orm_client):
+    client, _ = orm_client
+    report = Report.objects.first()
+    with CaptureQueriesContext(connection) as queries:
+        response = client.get(f"/reports/{report.pk}/")
+    assert response.status_code == 200
+    assert len(queries) == 2
+    assert "Не обнаружена" in response.content.decode()
+
+
+def test_legacy_import_rejects_disagreeing_measurements(orm_client):
+    _, source = orm_client
+    with closing(sqlite3.connect(source)) as conn, conn:
+        conn.execute("UPDATE reports SET temperature_value = 31")
+    with pytest.raises(ValueError, match="показания"):
+        import_source(source, update=True)
+
+
 def test_demo_command_does_not_change_database(orm_client):
     before = list(Room.objects.values())
     out = StringIO()
@@ -363,18 +407,28 @@ def test_pr10_manager_statuses_date_and_statistics(orm_client):
         report = Report(
             id=f"PR10-{number}", room=room, room_name=room.name,
             checked_at=timezone.now(), sensor_active=available, battery=100,
-            status=status, leak_detected=leak,
+            status=status,
         )
+        report.full_clean()
+        report.save()
         if available:
             for metric, val, low, high in [
                 ("temperature", value, 18, 24), ("humidity", 50, 40, 60),
+                ("leak", int(leak), 0, 0),
             ]:
-                for key, item in {"value": val, "minimum": low,
-                                  "maximum": high,
-                                  "normal": low <= val <= high}.items():
-                    setattr(report, f"{metric}_{key}", item)
-        report.full_clean()
-        report.save()
+                reading = Reading(
+                    id=f"{report.pk}-{metric}", sensor=room.sensor,
+                    metric_id=metric, report=report,
+                    measured_at=report.checked_at, value=val,
+                    minimum=low, maximum=high,
+                    status=(Status.ALARM if val else Status.NORMAL)
+                    if metric == "leak" else (
+                        Status.NORMAL if low <= val <= high else Status.WARNING
+                    ),
+                )
+                reading.full_clean()
+                reading.save()
+        report.validate_readings()
         records.append(report)
     assert Report.objects.for_date(day).for_room(room).count() == 4
     for method, record in zip(

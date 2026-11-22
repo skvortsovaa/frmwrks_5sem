@@ -41,7 +41,8 @@ def read_source(source):
 
 def normalize(model, row):
     """0/1 проверяются до bool(); время ПР7 трактуется как московское."""
-    row = dict(row)
+    field_names = {field.attname for field in model._meta.fields}
+    row = {key: value for key, value in row.items() if key in field_names}
     for field in model._meta.fields:
         name = field.attname
         # ПР10 добавляет slug и GeneratedField, которых нет в источнике ПР7.
@@ -96,4 +97,17 @@ def import_source(source=None, *, update=False):
                 if any(getattr(actual, key) != value
                        for key, value in values.items()):
                     raise ValueError(f"Не совпадают данные {table}.")
+        # Показания старого Report должны совпасть с единственным новым
+        # источником истины — Reading. Несогласованный импорт откатывается.
+        for raw in rows["reports"]:
+            report = Report.objects.get(pk=raw["id"])
+            report.validate_readings()
+            for metric in ("temperature", "humidity"):
+                analysis = getattr(report, metric)
+                for field in ("value", "minimum", "maximum", "normal"):
+                    actual = analysis[field] if analysis is not None else None
+                    if actual != raw[f"{metric}_{field}"]:
+                        raise ValueError("Не совпадают показания отчёта.")
+            if report.leak_detected != raw["leak_detected"]:
+                raise ValueError("Не совпадает состояние протечки.")
     return {table: len(records) for table, records in rows.items()}

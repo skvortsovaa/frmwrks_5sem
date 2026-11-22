@@ -73,7 +73,9 @@ def report_list(request):
 @database_page
 def report_detail(request, report_id):
     try:
-        report = Report.objects.select_related("room").get(pk=report_id)
+        report = Report.objects.select_related("room").prefetch_related(
+            "readings",
+        ).get(pk=report_id)
     except Report.DoesNotExist:
         report = None
     return render(request, "reports_web/report_detail.html", {

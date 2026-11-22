@@ -65,27 +65,18 @@ class Command(BaseCommand):
                 if scenario == 1:
                     values["temperature"] = metrics["temperature"].maximum + 4
                 values["leak"] = int(scenario == 2)
-                snapshot = {}
-                for key in ("temperature", "humidity"):
-                    metric = metrics[key]
-                    for field, value in dict(
-                        value=values[key], minimum=metric.minimum,
-                        maximum=metric.maximum,
-                        normal=metric.minimum <= values[key] <= metric.maximum,
-                    ).items():
-                        snapshot[f"{key}_{field}"] = (
-                            value if available else None
-                        )
+                normal = {
+                    key: metric.minimum <= values[key] <= metric.maximum
+                    for key, metric in metrics.items()
+                }
                 leak = bool(values["leak"]) if available else None
                 status = get_room_status(
-                    available, snapshot["temperature_normal"],
-                    snapshot["humidity_normal"], leak,
+                    available, normal["temperature"], normal["humidity"], leak,
                 )
                 report = Report(
                     id=report_id, room=room, room_name=room.name,
                     checked_at=checked_at, sensor_active=sensor.active,
-                    battery=sensor.battery, leak_detected=leak,
-                    status=status, **snapshot,
+                    battery=sensor.battery, status=status,
                 )
                 report.full_clean()
                 report.save()
@@ -108,6 +99,7 @@ class Command(BaseCommand):
                     )
                     reading.full_clean()
                     reading.save()
+                report.validate_readings()
         for model in (Room, Sensor, Metric, Report, Reading):
             self.stdout.write(f"{model._meta.verbose_name_plural}: "
                               f"{model.objects.count()}")

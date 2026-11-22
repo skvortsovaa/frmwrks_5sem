@@ -81,48 +81,6 @@ class Report(models.Model):
         verbose_name='Заряд при проверке, %',
         validators=[MaxValueValidator(100)],
     )
-    temperature_value = models.FloatField(
-        verbose_name='Температура, значение',
-        null=True,
-        blank=True,
-        validators=[finite_number],
-    )
-    temperature_minimum = models.FloatField(
-        verbose_name='Температура, нижняя граница',
-        null=True,
-        blank=True,
-        validators=[finite_number],
-    )
-    temperature_maximum = models.FloatField(
-        verbose_name='Температура, верхняя граница',
-        null=True,
-        blank=True,
-        validators=[finite_number],
-    )
-    temperature_normal = models.BooleanField(
-        verbose_name='Температура, в норме', null=True, blank=True)
-    humidity_value = models.FloatField(
-        verbose_name='Влажность, значение',
-        null=True,
-        blank=True,
-        validators=[finite_number],
-    )
-    humidity_minimum = models.FloatField(
-        verbose_name='Влажность, нижняя граница',
-        null=True,
-        blank=True,
-        validators=[finite_number],
-    )
-    humidity_maximum = models.FloatField(
-        verbose_name='Влажность, верхняя граница',
-        null=True,
-        blank=True,
-        validators=[finite_number],
-    )
-    humidity_normal = models.BooleanField(
-        verbose_name='Влажность, в норме', null=True, blank=True)
-    leak_detected = models.BooleanField(
-        verbose_name='Обнаружена протечка', null=True, blank=True)
     status = models.CharField(
         verbose_name='Статус',
         max_length=20,
@@ -144,28 +102,25 @@ class Report(models.Model):
                 condition=(
                     models.Q(sensor_active=True, battery__gt=0)
                     & ~models.Q(status=Status.NO_DATA)
-                    & models.Q(**{f"{metric}_{field}__isnull": False
-                                  for metric in ("temperature", "humidity")
-                                  for field in ("value", "minimum", "maximum",
-                                                "normal")})
-                    & models.Q(leak_detected__isnull=False)
                 ) | (
                     (models.Q(sensor_active=False) | models.Q(battery=0))
                     & models.Q(status=Status.NO_DATA)
-                    & models.Q(**{f"{metric}_{field}__isnull": True
-                                  for metric in ("temperature", "humidity")
-                                  for field in ("value", "minimum", "maximum",
-                                                "normal")})
-                    & models.Q(leak_detected__isnull=True)
-                ), name="report_snapshot_completeness",
+                ), name="report_availability_status",
             ),
         ]
 
+    def _reading(self, metric):
+        # all() использует prefetch-кэш карточки, если он уже загружен.
+        return next((row for row in self.readings.all()
+                     if row.metric_id == metric), None)
+
     def _analysis(self, metric):
-        if getattr(self, f"{metric}_value") is None:
+        row = self._reading(metric)
+        if row is None:
             return None
-        return {field: getattr(self, f"{metric}_{field}")
-                for field in ("value", "minimum", "maximum", "normal")}
+        return {"value": row.value, "minimum": row.minimum,
+                "maximum": row.maximum,
+                "normal": row.status == Status.NORMAL}
 
     @property
     def temperature(self):
@@ -175,32 +130,42 @@ class Report(models.Model):
     def humidity(self):
         return self._analysis("humidity")
 
+    @property
+    def leak_detected(self):
+        row = self._reading("leak")
+        return bool(row.value) if row is not None else None
+
     def clean(self):
         super().clean()
         available = self.sensor_active and (self.battery or 0) > 0
-        try:
-            normal = []
-            for metric in ("temperature", "humidity"):
-                fields = [getattr(self, f"{metric}_{field}")
-                          for field in ("value", "minimum", "maximum",
-                                        "normal")]
-                if available:
-                    result = analyze_metric(*fields[:3])
-                    if result.normal != fields[3]:
-                        raise ValueError("Неверная оценка показания.")
-                    normal.append(result.normal)
-                elif any(value is not None for value in fields):
-                    raise ValueError("У недоступного датчика нет показаний.")
-            if available and self.leak_detected is None:
-                raise ValueError("Не указано состояние протечки.")
-            if not available and self.leak_detected is not None:
-                raise ValueError("У недоступного датчика нет показаний.")
-            expected = (get_room_status(True, *normal, self.leak_detected)
-                        if available else Status.NO_DATA)
-            if self.status != expected:
-                raise ValueError("Статус не соответствует показаниям.")
-        except (ValueError, TypeError) as error:
-            raise ValidationError(str(error)) from error
+        if available == (self.status == Status.NO_DATA):
+            raise ValidationError(
+                "Статус не соответствует доступности датчика.")
+
+    def validate_readings(self):
+        """Проверить готовую проверку после записи всех её измерений."""
+        rows = list(self.readings.all())
+        available = self.sensor_active and self.battery > 0
+        if not available:
+            if rows or self.status != Status.NO_DATA:
+                raise ValidationError("У недоступного датчика нет показаний.")
+            return
+        by_metric = {row.metric_id: row for row in rows}
+        if (len(rows) != 3 or set(by_metric)
+                != {"temperature", "humidity", "leak"}):
+            raise ValidationError("Для проверки нужны три разных показателя.")
+        if len({row.sensor_id for row in rows}) != 1:
+            raise ValidationError(
+                "Измерения проверки должны быть от одного датчика.")
+        for row in rows:
+            row.full_clean()
+        expected = get_room_status(
+            True, by_metric["temperature"].status == Status.NORMAL,
+            by_metric["humidity"].status == Status.NORMAL,
+            bool(by_metric["leak"].value),
+        )
+        if self.status != expected:
+            raise ValidationError("Статус не соответствует показаниям.")
 
     def __str__(self):
         return f"{self.room_name}: {self.status} ({self.id})"
@@ -270,18 +235,9 @@ class Reading(models.Model):
                 raise ValueError("Датчик и отчёт из разных помещений.")
             if self.measured_at != self.report.checked_at:
                 raise ValueError("Время измерения не совпадает с отчётом.")
-            if self.metric_id == "leak":
-                if self.report.leak_detected is None or (
-                    self.value != int(self.report.leak_detected)
-                ):
-                    raise ValueError("Протечка не совпадает с отчётом.")
-            elif self.metric_id in ("temperature", "humidity"):
-                snapshot = getattr(self.report, self.metric_id)
-                if snapshot is None or any(
-                    getattr(self, key) != snapshot[key]
-                    for key in ("value", "minimum", "maximum")
-                ):
-                    raise ValueError("Измерение не совпадает с отчётом.")
+            if (not self.report.sensor_active or self.report.battery == 0
+                    or self.report.status == Status.NO_DATA):
+                raise ValueError("У недоступного датчика нет показаний.")
         except (ValueError, TypeError, ObjectDoesNotExist) as error:
             raise ValidationError(str(error)) from error
 

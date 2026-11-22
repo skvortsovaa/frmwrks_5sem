@@ -120,7 +120,7 @@
 совместная фильтрация/пагинация, ошибки БД и сохранение количества запросов.
 
 Воспроизводимый SQL-аудит: `manage.py audit_pr10`. На исходном наборе список
-отчётов выполняет 3 запроса, карточка отчёта/помещения — 1, измерения — 2.
+отчётов выполняет 3 запроса, карточка отчёта — 2, помещения — 1, измерения — 2.
 После удаления числа в навигации лишний COUNT не выполняется. JOIN даёт 1 запрос
 вместо 2; prefetch истории двух помещений — 2 вместо 3. Панель SQL проверена
 в браузере при фильтрации истории: дата, статус, ORDER BY, JOIN и LIMIT.
@@ -161,6 +161,31 @@ python -m venv .venv
 Для административного CRUD: `manage.py createsuperuser`, затем `/admin/`.
 Исторические отчёты и измерения в админке доступны только для чтения.
 
+### Отчёт и измерения после нормализации
+
+Миграция `reports_web/0004_normalize_report_readings` удаляет девять
+дублирующих полей температуры, влажности и протечки из `Report`.
+`Report` хранит факт проверки: помещение, время, историческое имя,
+состояние датчика и общий статус. `Reading` хранит отдельное показание,
+его границы и результат. На пару `(report, metric)` действует UNIQUE.
+Свойства `report.temperature`, `report.humidity`, `report.leak_detected`
+теперь читают связанные измерения, а не столбцы таблицы отчётов.
+
+Границы в `Metric` — текущие настройки; границы в `Reading` — нормы
+на момент измерения. Историческое имя и состояние датчика также независимы
+от их текущих значений. Общий статус проверки остаётся сохранённым итогом;
+это намеренная сводная величина, а не заявление о полной 3НФ всей схемы.
+
+Перед удалением столбцов миграция сверяет старые копии с измерениями.
+Недостающие измерения восстанавливаются из снимка; конфликт останавливает
+миграцию. Откат восстанавливает прежние поля из `Reading`.
+Карточка отчёта выполняет два запроса: JOIN помещения и prefetch измерений.
+При записи полного отчёта в `transaction.atomic()` сначала сохраняются
+метаданные и измерения, затем вызывается `report.validate_readings()`.
+Она проверяет три показателя, связи и соответствие общего статуса.
+`full_clean()` отдельного отчёта проверяет его поля и доступность датчика;
+сам `save()` не вызывает валидацию связанных записей.
+
 ### Модели и стратегия переноса
 
 | Модель и файл | Поля и связи |
@@ -168,12 +193,12 @@ python -m venv .venv
 | `rooms_web/models.py`: Room | BigAutoField id; название CharField; этаж IntegerField; площадь FloatField > 0 |
 | `sensors_web/models.py`: Sensor | Строковый PK; OneToOneField room, PROTECT, related_name=sensor; active BooleanField; battery 0–100 |
 | `reports_web/models.py`: Metric | Строковый PK; имя, единица; FloatField minimum/maximum; минимум ≤ максимум |
-| Там же: Report | Строковый PK; ForeignKey room, PROTECT, related_name=reports; DateTimeField checked_at; историческое имя, состояние датчика, температура, влажность, протечка и статус |
+| Там же: Report | Строковый PK; ForeignKey room, PROTECT, related_name=reports; DateTimeField checked_at; историческое имя, состояние датчика и общий статус; показания только в Reading |
 | Там же: Reading | Строковый PK; ForeignKey sensor/metric/report с PROTECT и related_name=readings; DateTimeField measured_at; значение и сохранённые нормы; UNIQUE(report, metric) |
 
 Три `0001_initial.py` создают новые таблицы в базе Django. Исходные таблицы
 ПР7 не изменяются. До работы сохранены копии обеих баз в `../tmp/pr9-backup/`.
-Перенос реализован в `db/import_sqlite_to_orm.py`, команда — `manage.py seed_demo`.
+Перенос реализован в `db/import_sqlite_to_orm.py`, команда — `manage.py import_pr7`.
 Источник открывается в режиме только для чтения, проверяются целостность и FK.
 Порядок: помещения → датчики → показатели → отчёты → измерения.
 Каждая запись проходит `full_clean()`; все записи объединены `transaction.atomic()`.
@@ -212,7 +237,7 @@ NULL означает отсутствие показаний, False означ�
 | 12 | Report.exclude(status="НЕТ ДАННЫХ") | `/reports/?exclude_no_data=1` |
 | 13 | Report.filter(Q(room_name...) or Q(room__name...) or Q(id...)) | поиск по историческому/текущему имени и ID |
 | 14 | Report.order_by("room__name", "-checked_at", "id") | `/reports/?sort=room` |
-| 15 | Report.select_related("room").get(pk=...) | карточка отчёта |
+| 15 | Report.select_related("room").prefetch_related("readings").get(pk=...) | карточка отчёта |
 | 16 | Room.values("id", "name").order_by("name", "id") | выбор помещения в форме истории |
 | 17 | Room.filter(~Exists(Report.filter(room_id=OuterRef("pk"), ...))) | `/rooms/uninspected/?date=2026-09-21` |
 | 18 | Room.aggregate(Count, Sum) | количество помещений и общая площадь |
