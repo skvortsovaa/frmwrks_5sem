@@ -3,13 +3,14 @@
 from contextlib import closing
 from datetime import datetime
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
 from db.database import get_connection
-from db.import_json import COLUMNS
+from db.import_json import COLUMNS, import_data
 from reports_web.models import Metric, Reading, Report
 from rooms_web.models import Room
 from sensors_web.models import Sensor
@@ -60,7 +61,14 @@ def normalize(model, row):
 
 def import_source(source=None, *, update=False):
     """Атомарный повторяемый импорт с защитой изменённых целевых записей."""
-    rows = read_source(source or settings.SMARTSPACE_DB_PATH)
+    if source is None and not settings.SMARTSPACE_DB_PATH.exists():
+        # Старые JSON остаются источником; постоянная вторая БД не нужна.
+        with TemporaryDirectory(prefix="smartspace-pr7-") as directory:
+            temporary_source = Path(directory) / "source.sqlite"
+            import_data(database=temporary_source)
+            rows = read_source(temporary_source)
+    else:
+        rows = read_source(source or settings.SMARTSPACE_DB_PATH)
     with transaction.atomic():
         for table, model in MODELS.items():
             for raw in rows[table]:

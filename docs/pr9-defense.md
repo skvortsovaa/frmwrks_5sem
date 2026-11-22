@@ -8,7 +8,7 @@ Roomly из методички адаптирован к мониторингу 
 
 ## Перед защитой
 
-Все команды выполняются из корня `FRAMEWORKI-prac1`:
+Все команды выполняются из корня `frmwrks_5sem`:
 
 ```powershell
 .\.venv\Scripts\python.exe manage.py check

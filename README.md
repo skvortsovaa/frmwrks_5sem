@@ -48,7 +48,7 @@
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe manage.py migrate
-.\.venv\Scripts\python.exe manage.py import_pr7
+.\.venv\Scripts\python.exe manage.py seed_demo
 .\.venv\Scripts\python.exe manage.py setup_pr10_roles
 .\.venv\Scripts\python.exe manage.py createsuperuser
 .\.venv\Scripts\python.exe manage.py runserver 8010 --insecure
@@ -57,6 +57,13 @@
 `createsuperuser` выполняется один раз. Подготовленный локальный вход находится
 в `.demo/pr10-admin.txt`; пароль, базы и резервные копии исключены из Git.
 После клонирования нужно создать своего администратора.
+Единственная постоянная база сайта — `db.sqlite3`. Команда `seed_demo`
+добавляет 6 помещений с датчиками и 18 проверок за 20–22 ноября 2026 года:
+норма, предупреждение, авария и отсутствие данных. Для доступных датчиков
+добавляются измерения температуры, влажности и протечки. Существующие записи
+и пользователи сохраняются; повторный запуск не создаёт дубликатов.
+Проверки переноса ПР7 создают источник из JSON во временной папке;
+хранить отдельную `data/smartspace.sqlite` не требуется.
 Сайт: http://127.0.0.1:8010/, админка: http://127.0.0.1:8010/admin/.
 
 ### Реализовано
@@ -96,7 +103,7 @@
 
 Новые миграции: rooms_web/0002 (GeneratedField, поэтапное заполнение slug,
 подсказка), sensors_web/0002, reports_web/0002–0003 (русские подписи).
-Исходные записи ПР9 и база `data/smartspace.sqlite` сохранены. Перенос ПР7
+Исходные записи ПР9 сохранены в единственной базе `db.sqlite3`. Перенос ПР7
 понимает отсутствие новых полей в источнике; повторный import_pr7 проверен.
 
 ```powershell
@@ -136,14 +143,14 @@ SmartSpace Monitor продолжает проект ПР1–ПР7. Основн
 
 ### Запуск ПР9
 
-После клонирования `https://github.com/skvortsovaa/FRAMEWORKI-prac1` перейти
+После клонирования `https://github.com/skvortsovaa/frmwrks_5sem` перейти
 в папку проекта. Если окружения ещё нет, создать его и установить зависимости:
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe manage.py migrate
-.\.venv\Scripts\python.exe manage.py import_pr7
+.\.venv\Scripts\python.exe manage.py seed_demo
 .\.venv\Scripts\python.exe manage.py check
 .\.venv\Scripts\python.exe manage.py runserver 8009 --insecure
 ```
@@ -166,7 +173,7 @@ python -m venv .venv
 
 Три `0001_initial.py` создают новые таблицы в базе Django. Исходные таблицы
 ПР7 не изменяются. До работы сохранены копии обеих баз в `../tmp/pr9-backup/`.
-Перенос реализован в `db/import_sqlite_to_orm.py`, команда — `manage.py import_pr7`.
+Перенос реализован в `db/import_sqlite_to_orm.py`, команда — `manage.py seed_demo`.
 Источник открывается в режиме только для чтения, проверяются целостность и FK.
 Порядок: помещения → датчики → показатели → отчёты → измерения.
 Каждая запись проходит `full_clean()`; все записи объединены `transaction.atomic()`.
@@ -280,7 +287,7 @@ Remove-Item Env:SMARTSPACE_DEBUG
 
 ### Запуск
 
-Из папки `FRAMEWORKI-prac1` в PowerShell:
+Из папки `frmwrks_5sem` в PowerShell:
 
 ```powershell
 .\.venv\Scripts\python.exe -m db.database
@@ -449,7 +456,7 @@ git diff --check
 ### Структура веб-версии
 
 ```text
-FRAMEWORKI-prac1/
+frmwrks_5sem/
 ├── manage.py                 # команды управления Django
 ├── smartspace_web/
 │   ├── settings.py           # приложения, локализация, служебная БД
@@ -773,7 +780,7 @@ ProjectData
 ### Структура консольной части
 
 ```text
-FRAMEWORKI-prac1/
+frmwrks_5sem/
 ├── README.md
 ├── requirements.txt
 ├── main.py                # меню и вывод

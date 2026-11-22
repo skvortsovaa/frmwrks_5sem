@@ -4,8 +4,6 @@ from contextlib import closing
 from datetime import timedelta
 from io import StringIO
 import os
-from pathlib import Path
-import shutil
 import sqlite3
 from unittest.mock import patch
 
@@ -27,6 +25,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "smartspace_web.settings")
 django.setup()
 
 from db.import_sqlite_to_orm import import_source, normalize, read_source  # noqa
+from db.import_json import import_data  # noqa
 from reports_web.models import Metric, Reading, Report, Status  # noqa
 from rooms_web.models import Room  # noqa
 from sensors_web.models import Sensor  # noqa
@@ -47,8 +46,7 @@ def orm_client(orm_database, tmp_path):
     resolve("/reports/")
     setup_test_environment()
     source = tmp_path / "source.sqlite"
-    shutil.copyfile(Path(__file__).resolve().parents[1]
-                    / "data/smartspace.sqlite", source)
+    import_data(database=source)
     try:
         with transaction.atomic(), override_settings(
             SMARTSPACE_DATA_SOURCE="orm", ALLOWED_HOSTS=["testserver"],
@@ -58,6 +56,26 @@ def orm_client(orm_database, tmp_path):
             transaction.set_rollback(True)
     finally:
         teardown_test_environment()
+
+
+def test_demo_seed_is_repeatable_and_snapshots_are_consistent(orm_client):
+    original_reports = set(Report.objects.values_list("pk", flat=True))
+    call_command("seed_demo", stdout=StringIO())
+    models = (Room, Sensor, Metric, Report, Reading)
+    counts = [model.objects.count() for model in models]
+    call_command("seed_demo", stdout=StringIO())
+    assert [model.objects.count() for model in models] == counts
+    assert original_reports <= set(Report.objects.values_list("pk", flat=True))
+    reports = Report.objects.filter(pk__startswith="DEMO-PR10-")
+    assert reports.count() == 18
+    assert set(reports.values_list("status", flat=True)) == set(Status.values)
+    for report in reports:
+        report.full_clean()
+        assert report.readings.count() == (
+            0 if report.status == Status.NO_DATA else 3
+        )
+        for reading in report.readings.all():
+            reading.full_clean()
 
 
 def test_import_preserves_every_field_links_and_source(orm_client):

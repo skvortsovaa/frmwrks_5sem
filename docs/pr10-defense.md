@@ -13,7 +13,7 @@ Reading — измерение. Пользователи и группы — с�
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe manage.py migrate
-.\.venv\Scripts\python.exe manage.py import_pr7
+.\.venv\Scripts\python.exe manage.py seed_demo
 .\.venv\Scripts\python.exe manage.py setup_pr10_roles
 .\.venv\Scripts\python.exe manage.py createsuperuser
 $env:SMARTSPACE_DEBUG = "1"
