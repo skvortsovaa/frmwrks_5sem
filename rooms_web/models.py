@@ -8,6 +8,7 @@ from django.utils.text import slugify
 from unidecode import unidecode
 
 from smartspace_web.validators import nonblank_text, positive_number
+from .uploads import room_photo_path, validate_room_photo
 
 
 class Room(models.Model):
@@ -21,6 +22,11 @@ class Room(models.Model):
     )
     slug = models.SlugField("Адрес", max_length=220, unique=True,
                             blank=True, editable=False)
+    photo = models.ImageField(
+        "Фотография", upload_to=room_photo_path, blank=True,
+        validators=[validate_room_photo],
+        help_text="JPEG, PNG или WebP, до 5 МБ и 20 Мп.",
+    )
     is_large = models.GeneratedField(
         verbose_name="Большое помещение",
         expression=models.Case(

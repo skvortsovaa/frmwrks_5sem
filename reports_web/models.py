@@ -8,6 +8,7 @@ from models.metrics import analyze_metric
 from models.reports import get_room_status
 from smartspace_web.validators import finite_number, nonblank_text
 from .querysets import ReportQuerySet
+from .plans import InspectionPlan  # noqa: F401
 
 
 class Status(models.TextChoices):

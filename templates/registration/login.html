@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Вход | SmartSpace Monitor{% endblock %}
+{% block content %}
+<h1>Вход в SmartSpace</h1>
+<p>Используйте учётную запись с правами управления планами или помещениями.</p>
+<form method="post" class="col-lg-5">
+    {% csrf_token %}
+    {% include 'includes/form_fields.html' %}
+    <input type="hidden" name="next" value="{{ next }}">
+    <button class="btn btn-primary" type="submit">Войти</button>
+</form>
+{% endblock %}

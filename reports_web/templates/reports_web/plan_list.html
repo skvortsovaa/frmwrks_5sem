@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Планы проверок | SmartSpace Monitor{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap gap-3 justify-content-between align-items-center mb-3">
+    <h1>Планы проверок</h1>
+    {% if perms.reports_web.add_inspectionplan %}<a class="btn btn-primary" href="{% url 'inspections:create' %}">Запланировать проверку</a>{% endif %}
+</div>
+<p class="text-secondary">Одна активная проверка помещения в день. Отмена сохраняет план и освобождает дату. Результаты измерений находятся в истории проверок.</p>
+<form method="get" class="row g-3 mb-4">
+    {% for field in form %}<div class="col-md-4">{{ field.label_tag }}{{ field }}{% for error in field.errors %}<div class="text-danger" role="alert">{{ error }}</div>{% endfor %}</div>{% endfor %}
+    <div class="col-12 d-flex gap-2"><button class="btn btn-primary" type="submit">Применить</button><a class="btn btn-outline-secondary" href="{% url 'inspections:list' %}">Сбросить</a></div>
+</form>
+<p>Найдено планов: {{ page_obj.paginator.count }}</p>
+<div class="table-responsive"><table class="table align-middle">
+    <thead><tr><th>Дата</th><th>Помещение</th><th>Задача</th><th>Автор</th><th>Статус</th><th>Действия</th></tr></thead>
+    <tbody>{% for plan in page_obj %}<tr>
+        <td>{{ plan.inspection_date|date:"d.m.Y" }}</td>
+        <td><a href="{{ plan.room.get_absolute_url }}">{{ plan.room.name }}</a></td>
+        <td>{{ plan.note|default:"Плановая проверка" }}</td><td>{{ plan.created_by.username }}</td>
+        <td>{{ plan.get_status_display }}</td>
+        <td>{% if plan.status == 'planned' and perms.reports_web.change_inspectionplan %}
+            <a class="btn btn-sm btn-outline-primary mb-1" href="{% url 'inspections:edit' plan.pk %}">Изменить</a>
+            <form method="post" action="{% url 'inspections:cancel' plan.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-danger" type="submit">Отменить</button></form>
+        {% endif %}</td>
+    </tr>{% empty %}<tr><td colspan="6">Планов по выбранным условиям нет.</td></tr>{% endfor %}</tbody>
+</table></div>
+{% include 'includes/pagination.html' %}
+{% endblock %}

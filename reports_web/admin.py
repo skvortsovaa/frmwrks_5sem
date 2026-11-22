@@ -1,6 +1,38 @@
 from django.contrib import admin
 
-from .models import Metric, Reading, Report
+from .models import InspectionPlan, Metric, Reading, Report
+from .forms import InspectionPlanForm
+
+
+@admin.register(InspectionPlan)
+class InspectionPlanAdmin(admin.ModelAdmin):
+    form = InspectionPlanForm
+    list_display = ("id", "room", "inspection_date", "status", "created_by")
+    list_filter = ("status", "inspection_date", "room")
+    list_select_related = ("room", "created_by")
+    search_fields = ("room__name", "note", "created_by__username")
+    readonly_fields = ("status", "created_by", "created_at")
+    actions = ("cancel_plans",)
+
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)
+
+    def has_change_permission(self, request, obj=None):
+        return super().has_change_permission(request, obj) and (
+            obj is None or obj.status == InspectionPlan.Status.PLANNED
+        )
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    @admin.action(description="Отменить планы", permissions=["change"])
+    def cancel_plans(self, request, queryset):
+        count = queryset.active().update(
+            status=InspectionPlan.Status.CANCELLED,
+        )
+        self.message_user(request, f"Отменено планов: {count}.")
 
 
 class HistoryPermissions:

@@ -4,6 +4,8 @@
     {% if room %}
         <h1>{{ room.name|default:"Без названия" }}</h1>
         <p class="text-secondary">Помещение №{{ room.id }}</p>
+        {% if room.photo %}<img src="{{ room.photo.url }}" alt="Фотография помещения {{ room.name }}" class="img-fluid rounded mb-4" style="max-height:360px">{% endif %}
+        {% if room.slug and perms.rooms_web.change_room %}<p><a class="btn btn-outline-primary" href="{% url 'rooms:edit' room.slug %}">Изменить помещение и фото</a></p>{% endif %}
         <div class="row g-4 mb-4">
             <section class="col-12 col-md-6">
                 <div class="card room-card h-100 shadow-sm">

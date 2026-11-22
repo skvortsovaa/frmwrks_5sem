@@ -11,6 +11,7 @@
 <body class="d-flex flex-column min-vh-100">
     {% include "includes/navigation.html" %}
     <main id="main-content" class="container py-5 flex-grow-1">
+        {% for message in messages %}<div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %}" role="status">{{ message }}</div>{% endfor %}
         {% block content %}{% endblock %}
     </main>
     <footer class="container py-3 border-top text-secondary small">

@@ -566,7 +566,9 @@ def test_pr10_staff_view_only_group_and_anonymous_access(orm_client):
     call_command("setup_pr10_roles", stdout=StringIO())
     call_command("setup_pr10_roles", stdout=StringIO())
     group = Group.objects.get(name="Наблюдатели SmartSpace")
-    assert group.permissions.count() == 5
+    # ПР11 добавляет просмотр планов; прав изменения по-прежнему нет.
+    assert group.permissions.count() == 6
+    assert not group.permissions.exclude(codename__startswith="view_").exists()
     user = get_user_model().objects.create_user("observer", is_staff=True)
     user.groups.add(group)
     client.force_login(user)

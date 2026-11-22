@@ -5,6 +5,7 @@ from django.forms import NumberInput
 from reports_web.admin import ReportInline
 from sensors_web.admin import SensorInline
 from .models import Room
+from .forms import RoomForm
 
 
 admin.site.site_header = "SmartSpace Monitor — управление"
@@ -27,6 +28,7 @@ class LargeRoomFilter(admin.SimpleListFilter):
 
 @admin.register(Room)
 class RoomAdmin(admin.ModelAdmin):
+    form = RoomForm
     list_display = (
         "id", "name", "floor", "area", "large_room", "reports_count",
     )
@@ -40,7 +42,7 @@ class RoomAdmin(admin.ModelAdmin):
     ordering = ("name", "id")
     list_per_page = 20
     readonly_fields = ("slug", "large_room")
-    fields = ("name", "floor", "area", "slug", "large_room")
+    fields = ("name", "floor", "area", "photo", "slug", "large_room")
     inlines = (SensorInline, ReportInline)
     view_on_site = True
 

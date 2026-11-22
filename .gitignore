@@ -25,6 +25,7 @@ data/.save-backup.json
 
 # Копии для учебной демонстрации и журналы SQLite
 /.demo/
+/media/
 data/*.sqlite-journal
 data/*.sqlite-wal
 data/*.sqlite-shm

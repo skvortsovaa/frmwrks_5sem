@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}План проверки | SmartSpace Monitor{% endblock %}
+{% block content %}
+<h1>{% if plan %}Редактирование плана №{{ plan.pk }}{% else %}Новая проверка{% endif %}</h1>
+<p>Выберите помещение и дату. Для каждого помещения можно запланировать одну проверку в день.</p>
+<form method="post" class="col-lg-7" novalidate>
+    {% csrf_token %}
+    {% include 'includes/form_fields.html' %}
+    <button class="btn btn-primary" type="submit">Сохранить</button>
+    <a class="btn btn-outline-secondary" href="{% url 'inspections:list' %}">К планам проверок</a>
+</form>
+{% endblock %}

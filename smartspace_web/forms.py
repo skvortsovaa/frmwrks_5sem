@@ -1,0 +1,11 @@
+from django import forms
+
+
+class BootstrapFormMixin:
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs["class"] = (
+                "form-select" if isinstance(field.widget, forms.Select)
+                else "form-control"
+            )
